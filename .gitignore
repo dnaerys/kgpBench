@@ -1,0 +1,12 @@
+# Build, install and gate residue. Nothing else belongs here: every other file in
+# this repository is written by the release mirror, so a hand-kept file is either
+# deleted on the next release or needs an exception that puts it outside the
+# release guard's scan.
+__pycache__/
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
