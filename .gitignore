@@ -1,0 +1,20 @@
+# Build, install and gate residue. Nothing else belongs here: every other file in
+# this repository is written by the release mirror, so a hand-kept file is either
+# deleted on the next release or needs an exception that puts it outside the
+# release guard's scan.
+#
+# `evals/logs/` is that one exception, and it is deliberately absent from the
+# list below. Logs live there, one directory per rollout, and they are committed
+# by hand — put there on purpose, as a demonstration or with official results.
+# The release step excludes the directory at the root, so the mirror neither
+# writes nor deletes inside it and nothing there is scanned. An ignore rule here
+# would refuse the release instead: the destination must be wholly clean with
+# ignored files counted.
+__pycache__/
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

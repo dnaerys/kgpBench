@@ -1,0 +1,6 @@
+# The sdist carries the package, its metadata and its licence, and no test tree.
+# setuptools' legacy default adds `tests/test*.py` with no `MANIFEST.in`, and
+# those modules cannot be collected without the support files beside them; with
+# the support files added the suite still runs only from an editable install of
+# the unpacked root. The tests' home is the repository.
+prune tests
