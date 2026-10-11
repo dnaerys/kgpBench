@@ -146,8 +146,8 @@ class Check(BaseModel):
         if self.in_scope and self.contamination_class is None:
             raise ValueError(
                 f"check {self.id!r} is in scope but carries no "
-                "contamination_class; §12 Principle 2 classifies every check in "
-                "scope. Only the forward direction is enforced — an out-of-scope "
+                "contamination_class; every check in scope carries a contamination "
+                "class. Only the forward direction is enforced — an out-of-scope "
                 "check may be classified early."
             )
         return self

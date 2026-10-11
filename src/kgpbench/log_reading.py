@@ -323,7 +323,7 @@ def assert_generation_log(log: EvalLog, location: str) -> None:
             f"{location}: {[s.name for s in carrying]} carries a "
             f"{CATALOGUE_OPTION!r} option, so this is a scoring log and not a "
             "generation log. A generation log is rubric-free by construction: "
-            "its only scorer is `render_capture`, which takes no arguments (§4a)"
+            "its only scorer is `render_capture`, which takes no arguments"
         )
 
 

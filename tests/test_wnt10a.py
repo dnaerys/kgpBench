@@ -209,7 +209,7 @@ def test_the_id_is_opaque() -> None:
     # until then the id was a digest over a hand-written tuple of identifying
     # parts, this literal pinned only that tuple, and the content moved at v41
     # with this assertion passing (§4, §9, §0 v43, §0 v44).
-    assert INSTANCE.id == "0584547da36abd7d"
+    assert INSTANCE.id == "8633ee52c4df7353"
     for leak in ("WNT10A", "wnt10a", "218890", "chr2"):
         assert leak not in INSTANCE.id
 

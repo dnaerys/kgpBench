@@ -227,8 +227,10 @@ def test_a_null_expected_outcome_is_rejected_as_well_as_an_omitted_one():
     construction paths, because a test that built a prompt and looked for a
     missing line would assert the consequence rather than the rule (§15).
     """
-    with pytest.raises(ValidationError, match="expected must not be None"):
+    with pytest.raises(ValidationError, match="expected must not be None") as refusal:
         CheckGroundTruth(check_id="A1", expected=None)
+    # no section reference: the specification does not publish
+    assert "§" not in str(refusal.value)
 
     # the deferred path revalidates the stored wire form, and it refuses too
     with pytest.raises(ValidationError, match="expected must not be None"):
@@ -335,8 +337,10 @@ def test_the_id_is_excluded_from_the_payload_it_is_derived_from():
 
 def test_with_derived_id_refuses_an_id_rather_than_ignoring_one():
     """Refused, not overwritten: a caller passing one has the rule backwards."""
-    with pytest.raises(TypeError, match="derives the id"):
+    with pytest.raises(TypeError, match="derives the id") as refusal:
         Instance.with_derived_id(id="aaaaaaaaaaaaaaaa", **_content())
+    # no section reference: the specification does not publish
+    assert "§" not in str(refusal.value)
 
 
 def test_every_content_field_moves_the_derived_id():

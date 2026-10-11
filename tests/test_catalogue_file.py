@@ -424,8 +424,10 @@ def test_an_in_scope_check_must_carry_a_contamination_class(tmp_path: Path) -> N
     for check in payload["checks"]:
         if check["id"] == "A1":
             check["contamination_class"] = None
-    with pytest.raises(ValidationError, match="in scope but carries no"):
+    with pytest.raises(ValidationError, match="in scope but carries no") as refusal:
         load_catalogue(written(tmp_path, payload))
+    # no section reference: the specification does not publish
+    assert "§" not in str(refusal.value)
 
 
 def test_an_out_of_scope_check_may_be_classified_early(tmp_path: Path) -> None:

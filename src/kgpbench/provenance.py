@@ -17,7 +17,7 @@ to compare two results whose digests differ on an axis it is not controlling for
 | Solver configuration | :class:`SolverConfig` digest, in task metadata |
 | Trajectory rendering format | :data:`~kgpbench.version.RENDERER_VERSION` |
 | Framework version | installed `inspect_ai` distribution version |
-| Dataset snapshot | OneKGPd pinned identifier, in task metadata |
+| Dataset snapshot | OneKGPd's ``datasetId``, read at generation, in task metadata |
 | Trajectory completeness | :mod:`kgpbench.trajectory` |
 
 Placeholders are used where the producing component does not exist yet. The
@@ -79,7 +79,8 @@ carrier the analysis layer could read. The sidecar is that carrier. See
 """
 
 UNKNOWN_SNAPSHOT = "onekgpd-unpinned"
-"""Placeholder release identifier — see :class:`DatasetSnapshot`."""
+"""The default of :attr:`DatasetSnapshot.release`: what a record built without
+reading the server carries — see :class:`DatasetSnapshot`."""
 
 
 def framework_version() -> str:
@@ -126,38 +127,45 @@ def framework_version() -> str:
 
 
 class DatasetSnapshot(BaseModel):
-    """Identity of the cohort and annotation release ground truth was built against.
+    """The dataset a run's tools queried: OneKGPd's ``datasetId``, as read (§2, §7).
 
-    The MCP tool surface does not expose a release identifier — ``getDatasetInfo``
-    returns cohort shape only (verified against the live server, see
-    `design/foundations.md` §4). So ``release`` has to be supplied by hand from
-    the OneKGPd page, and cannot be validated automatically.
+    ``getDatasetInfo`` returns ``datasetId`` beside the cohort counts. It moves
+    with every ETL and with nothing else, including an annotation-only ETL that
+    leaves every count identical, so it identifies the content where the counts
+    could not. :func:`~kgpbench.tasks.build_generation_task` reads it before any
+    model call and writes it to :attr:`release`
+    (:mod:`~kgpbench.dataset_id`). It is compared by equality and never parsed,
+    and it is a combination axis (§5).
 
-    ``fingerprint`` is what makes a silent substrate swap detectable anyway: the
-    counts ``getDatasetInfo`` does return, recorded per run. They will not catch
-    an annotation-only change — an updated ClinVar or AlphaMissense release
-    leaves every count identical — so they are a floor, not a guarantee.
+    **The other three fields keep their defaults**, so the id is recorded once
+    (§7). They stay on the record because every record written with them must
+    keep loading: this model forbids unknown fields, and a published sidecar
+    carries all four.
+
+    **A record written before the id existed carries the earlier string in**
+    :attr:`release`: the cohort counts written by hand as
+    ``onekgpd-variants-138044723-samples-3202``. Such a record loads as before
+    and combines with records carrying the same string, and with nothing later.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     release: str = UNKNOWN_SNAPSHOT
-    """Human-supplied pinned identifier from the OneKGPd page."""
+    """OneKGPd's ``datasetId``, as the generation run read it.
+    :data:`UNKNOWN_SNAPSHOT` on a record built without that read."""
 
     annotation_sources: list[str] = Field(default_factory=list)
-    """e.g. ``["gnomAD 4.1", "AlphaMissense", "ClinVar", "VEP"]``, each versioned."""
+    """Kept for loading; nothing writes it."""
 
     fingerprint: dict[str, Any] = Field(default_factory=dict)
-    """Verbatim ``getDatasetInfo`` response for the run."""
+    """Kept for loading; nothing writes it."""
 
     mcp_url: str | None = None
+    """Kept for loading; nothing writes it."""
 
     @property
     def digest(self) -> str:
         return sha256_digest(self.model_dump(mode="json"))
-
-    def is_pinned(self) -> bool:
-        return self.release != UNKNOWN_SNAPSHOT
 
 
 ReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh", "max"]
@@ -400,10 +408,15 @@ class RunProvenance(BaseModel):
         dataset_snapshot: DatasetSnapshot | None = None,
         renderer_version: str = RENDERER_VERSION,
     ) -> RunProvenance:
-        """Assemble provenance from the objects a run already has."""
-        snapshot = dataset_snapshot or DatasetSnapshot(
-            release=instances.dataset_snapshot or UNKNOWN_SNAPSHOT
-        )
+        """Assemble provenance from the objects a run already has.
+
+        ``dataset_snapshot`` is the id the generation run read
+        (:func:`~kgpbench.tasks.build_generation_task`). Without it the record
+        carries :data:`UNKNOWN_SNAPSHOT`: nothing here reads the server, and a
+        value derived from what the instances declare would be a claim where
+        the record holds observations.
+        """
+        snapshot = dataset_snapshot or DatasetSnapshot()
         return cls(
             instances_name=instances.name,
             instances_sha256=instances.digest,
@@ -460,41 +473,6 @@ class RunProvenance(BaseModel):
     def digest(self) -> str:
         """Digest over the whole provenance record."""
         return sha256_digest(self.model_dump(mode="json"))
-
-    def unpinned(self) -> list[str]:
-        """Axes still carrying a placeholder.
-
-        **A test-only introspection helper. It has no production caller by
-        decision, not by oversight** (§7, §0 v24). §7 left open whether to wire
-        this into the task-build path as a warning; it is ruled here as the
-        helper it already is, and must not be wired in.
-
-        The reason is the one §7 used to delete ``framework_commit_pinned``: a
-        permanently-on warning is not a warning. Its two clauses are not alike.
-        The renderer clause is **live** — a renderer version carrying the
-        ``-unimplemented`` suffix is a real state that can start and stop being
-        true. The snapshot clause is **permanently true**, and stays so until
-        OneKGPd's tool surface returns a dataset identifier, which is a server
-        change decided in §2 with its content undecided (§2, `foundations.md`
-        §4.4). Wiring this into a run path would therefore print on every run
-        until that change lands — reproducing exactly the defect that deletion
-        removed.
-
-        What it is for: asking a `RunProvenance` in hand which axes are still
-        placeholders. That is a question tests ask and a run does not, because a
-        run cannot act on the answer.
-
-        Returns:
-            Names of fields that have not been given a real value yet, in a fixed
-            order. Empty means every axis is pinned — which, per the clause above,
-            no run produces today.
-        """
-        missing: list[str] = []
-        if self.renderer_version.endswith("-unimplemented"):
-            missing.append("renderer_version")
-        if not self.dataset_snapshot.is_pinned():
-            missing.append("dataset_snapshot.release")
-        return missing
 
 
 class ProvenanceMismatch(BaseModel):

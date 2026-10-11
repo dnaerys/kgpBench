@@ -66,17 +66,15 @@ def test_version_changes_when_the_check_relation_changes(instances):
     )
 
 
-def test_version_ignores_the_set_name_and_the_set_level_snapshot(instances):
+def test_version_ignores_the_set_name(instances):
     """The digest is over the resolved members and nothing else (§4, §0 v31).
 
     The name comes from the composition config, so digesting it would make a
-    rename look like a membership change; the set-level snapshot is derived from
-    the members and travels on its own comparison axis (§7). Both left the
-    payload in the same edit that added the sort.
+    rename look like a membership change. It left the payload in the same edit
+    that added the sort.
     """
     renamed = instances.model_copy(update={"name": "another-name"})
-    resnapped = instances.model_copy(update={"dataset_snapshot": "onekgpd-other"})
-    assert task_version(instances) == task_version(renamed) == task_version(resnapped)
+    assert task_version(instances) == task_version(renamed)
 
 
 def test_version_changes_when_an_instance_is_added_or_removed(instances):

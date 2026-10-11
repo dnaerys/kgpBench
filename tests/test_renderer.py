@@ -748,7 +748,7 @@ def test_the_capture_metadata_names_exactly_the_three_sections(
     metadata = ((full_log.samples or [])[0].scores or {})["render_capture"].metadata
     assert metadata is not None
 
-    assert metadata["renderer_version"] == RENDERER_VERSION == "r2"
+    assert metadata["renderer_version"] == RENDERER_VERSION == "r3"
     assert tuple(metadata["section_digests"]) == SECTIONS
     assert "completeness" not in metadata["section_digests"]
     assert all(length > 0 for length in metadata["section_lengths"].values())

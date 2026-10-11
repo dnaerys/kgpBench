@@ -253,11 +253,7 @@ def resolve_set(
     members.sort(key=lambda member: member[1].id)
     instances = [instance for _, instance in members]
     try:
-        built = InstanceSet(
-            name=name,
-            dataset_snapshot=_shared_snapshot(instances),
-            instances=instances,
-        )
+        built = InstanceSet(name=name, instances=instances)
     except ValidationError as error:
         raise CompositionError(
             f"set {name!r} in {resolved_path} does not compose: {error}"
@@ -330,23 +326,6 @@ def _warn_on_unselected(
                     f"this run proceeds",
                     stacklevel=3,
                 )
-
-
-def _shared_snapshot(instances: list[Instance]) -> str | None:
-    """The members' dataset snapshot when they agree on one, else ``None``.
-
-    Derived rather than declared, because there is nowhere left to declare it:
-    the config names modules and the set-level value used to be written beside
-    the members in an instance module. Deriving it keeps
-    :class:`~kgpbench.provenance.RunProvenance` recording the snapshot
-    the members were actually built against, which is what the
-    ``dataset_snapshot`` comparison axis reads (§7). Members that disagree have
-    no shared snapshot, and each instance still carries its own.
-    """
-    snapshots = {instance.dataset_snapshot for instance in instances}
-    if len(snapshots) == 1:
-        return snapshots.pop()
-    return None
 
 
 def _announce(

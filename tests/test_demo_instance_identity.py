@@ -71,8 +71,8 @@ checkout whose root is the package. Nothing above the package root is reached.
 # The module set is asserted against these pins in both directions below, so an
 # instance added to this package without a pin fails here rather than passing.
 PINNED_IDS = {
-    "wnt10a": "0584547da36abd7d",
-    "wnt10a_pathogenicity": "f0e6ab9e1f36b8b3",
+    "wnt10a": "8633ee52c4df7353",
+    "wnt10a_pathogenicity": "ccdc06bb0a53f9a0",
 }
 
 # The strings an id must not contain, and they are the real ones. A synthetic

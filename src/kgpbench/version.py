@@ -20,9 +20,9 @@ from __future__ import annotations
 
 __all__ = ["HARNESS_VERSION", "RENDERER_VERSION"]
 
-HARNESS_VERSION = "0.1.0"
+HARNESS_VERSION = "0.1.1"
 
-RENDERER_VERSION = "r2"
+RENDERER_VERSION = "r3"
 """Identifier for the trajectory rendering format.
 
 It is here from the first commit because retrofitting a provenance field makes
@@ -39,6 +39,25 @@ judges read (§6.4, closed at v12), the document is chronological and fenced
 rather than one block per channel, and every fenced body goes through
 `neutralize_structural_delimiters` (§13.4). No corpus exists, so nothing is
 invalidated.
+
+``r2`` → ``r3`` renders the tool calls a model's provider ran during
+generation, and changes nothing else (§6.4, §0 v121). An assistant message
+carrying a `ContentToolUse` or a citation renders in content order: each
+provider-run call as an arguments, a result and an optional error block in the
+``tool_events`` channel, the answer's text pieces joined as written rather than
+with the newline ``ChatMessageBase.text`` inserts, and its citations in one
+cited-sources block after the answer, with each field the vendor made opaque
+replaced by a marker. Every other message renders through the ``r2`` code, so a
+trajectory carrying neither renders to its ``r2`` bytes — measured over every
+trajectory in the four published generation logs — and its digest does not
+move. No published trajectory carries either.
+
+Before anything was published under ``r3``, Anthropic's list gained two entries
+and the version did not move (§0 v123): ``encrypted_stdout``, the code
+container's encrypted output, renders as the withheld marker, and a fetched
+document whose source is base64 bytes renders its data as
+``[not rendered: <media type>, base64, N characters]``. Each moves only the
+digest of a trajectory that carries it, and none has been recorded.
 
 Bump it for **any** change to what a judge reads — block order, labels,
 tool-result delimiters, how reasoning is labelled. Not for changes to the

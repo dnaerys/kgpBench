@@ -401,6 +401,7 @@ def test_a_scoring_log_is_refused_as_the_generation_log(
         )
 
     assert "so this is a scoring log and not a generation log" in str(refusal.value)
+    assert "§" not in str(refusal.value), "the specification does not publish"
     assert str(refusal.value) == str(by_command.value)
     assert len(recorder.prompts) == calls, "a judge ran over the scoring log"
     assert not again.exists(), "the scoring directory was created"
